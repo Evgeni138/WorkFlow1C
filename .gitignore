@@ -1,0 +1,35 @@
+# 1C binaries (intermediate/working files)
+*.dt
+
+# Built artifacts in dist/ are tracked (for distribution)
+# All other CF/CFE/EPF/ERF outside dist/ are ignored
+*.cf
+*.cfe
+*.epf
+*.erf
+!dist/*.cf
+!dist/*.cfe
+!dist/*.epf
+!dist/*.erf
+
+# Credentials (contains passwords)
+.v8-project.json
+
+# Logs and temp
+*.log
+tmp/
+
+# Local tooling caches / artifacts (regenerated)
+.build/
+.playwright-mcp/
+templates/unload_*.txt
+
+# Session notes (personal, not template material)
+session-notes.md
+
+# 1C configuration / extension dumps are ADDED on deploy (src/, ext/)
+# Placeholders keep the repo structure; real dumps appear when you run db-dump-xml.
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,56 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  // 1C AI Workspace — шаблон для opencode.
+  //
+  // ПЛЕЙСХОЛДЕРЫ (замените при развёртывании, см. AGENTS.md и QUICK_START.md):
+  //   {{WORKSPACE_ROOT}} — абсолютный путь к корню этого воркспейса (напр. D:\WorkFlow\<project>)
+  //   {{AI_ENV}}         — абсолютный путь к каталогу локального окружения с исполняемыми
+  //                        файлами MCP-серверов (rlm-tools-bsl.exe, bsl-analyzer.exe),
+  //                        например D:\1c-ai-env\.local\bin
+  //   {{NODE}}           — путь к node.exe из комплекта окружения,
+  //                        например C:\Program Files\nodejs\node.exe
+  //
+  // ВАЖНО: СТРОГОГО JSON не содержит (используется JSONC — комментарии допустимы).
+  // Кавычки внутри Windows-путей экранируются двойным бэкслешем (\\).
+  "instructions": ["AGENTS.md"],
+  "mcp": {
+    // Управление браузером: веб-клиент 1С, UI-тестирование.
+    // Требуется интернет для первого скачивания пакета; браузер — системный Chrome/Edge.
+    "playwright": {
+      "type": "local",
+      "command": ["cmd", "/c", "npx", "-y", "@playwright/mcp@latest"],
+      "enabled": true
+    },
+    // RLM-анализ кодовых баз 1С (BSL): поиск по исходникам, экономия контекста.
+    // Локальный исполняемый файл переносится вместе с окружением (.local\bin).
+    "rlm-tools-bsl": {
+      "type": "local",
+      "command": ["{{AI_ENV}}\\rlm-tools-bsl.exe"],
+      "enabled": true
+    },
+
+    // Публичный MCP-сервер стандартов 1С v8std: v8std_search, v8std_get_page,
+    // v8std_explain_snippet, v8std_explain_diagnostics. Внимание: текст запроса уходит
+    // во внешний сервис — не отправлять через него проприетарный код.
+    "v8std": {
+      "type": "remote",
+      "url": "https://ai.v8std.ru/mcp",
+      "enabled": true
+    },
+    // BSL Language Server: диагностики, навигация, анализ кода 1С (BSL).
+    // Бинарник {{AI_ENV}}\bsl-analyzer.exe говорит строго JSON-lines,
+    // поэтому подключается через stdio-мост {{WORKSPACE_ROOT}}\scripts\mcp-bsl-analyzer-bridge.cjs
+    // (LSP-фреймы <> JSON-lines).
+    "bsl-language-server": {
+      "type": "local",
+      "command": ["{{NODE}}", "{{WORKSPACE_ROOT}}\\scripts\\mcp-bsl-analyzer-bridge.cjs", "{{AI_ENV}}\\bsl-analyzer.exe", "mcp", "serve", "--profile", "workspace", "-s", "{{WORKSPACE_ROOT}}"],
+      "enabled": true
+    },
+    // Экономия контекста. Включите при необходимости.
+    "context-mode": {
+      "type": "local",
+      "command": ["cmd", "/c", "npx", "-y", "context-mode"],
+      "enabled": true
+    }
+  }
+}

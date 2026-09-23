@@ -41,9 +41,16 @@
     // Бинарник {{AI_ENV}}\bsl-analyzer.exe говорит строго JSON-lines,
     // поэтому подключается через stdio-мост {{WORKSPACE_ROOT}}\scripts\mcp-bsl-analyzer-bridge.cjs
     // (LSP-фреймы <> JSON-lines).
+    //
+    // ВАЖНО: -s (source-dir) задаёт ЕДИНСТВЕННЫЙ корень анализа. Профиль 'workspace'
+    // авто-детектит конфигурацию 1С из этого корня (src/, ext/) и индексирует её полностью —
+    // это давало 2+ ядра CPU и ГБ RAM. Поэтому корень СУЖЕН до {{WORKSPACE_ROOT}}\external
+    // (внешние EPF/ERF). Полная выгрузка конфигурации из src/, ext/ анализируется
+    // ИСКЛЮЧИТЕЛЬНО через rlm-tools-bsl (проекты реестра RLM). Не расширять -s на весь
+    // корень проекта.
     "bsl-language-server": {
       "type": "local",
-      "command": ["{{NODE}}", "{{WORKSPACE_ROOT}}\\scripts\\mcp-bsl-analyzer-bridge.cjs", "{{AI_ENV}}\\bsl-analyzer.exe", "mcp", "serve", "--profile", "workspace", "-s", "{{WORKSPACE_ROOT}}"],
+      "command": ["{{NODE}}", "{{WORKSPACE_ROOT}}\\scripts\\mcp-bsl-analyzer-bridge.cjs", "{{AI_ENV}}\\bsl-analyzer.exe", "mcp", "serve", "--profile", "workspace", "-s", "{{WORKSPACE_ROOT}}\\external"],
       "enabled": true
     },
     // Экономия контекста. Включите при необходимости.

@@ -145,7 +145,8 @@ cd <template-repo>
 **Проверьте:**
 1. Сервер запущен: `curl http://localhost:PORT/health`
 2. Пути в `opencode.jsonc` (`{{AI_ENV}}`, `{{WORKSPACE_ROOT}}`) корректны
-3. Логи сервера
+3. У `bsl-language-server` корень `-s` = `{{WORKSPACE_ROOT}}\external` (не корень проекта!) — если `-s` указывает на весь workspace, bsl-analyzer долго индексирует конфигурацию 1С из `src/`/`ext/`; полная выгрузка анализируется через `rlm-tools-bsl`
+4. Логи сервера
 
 ### Навыки не выполняются
 

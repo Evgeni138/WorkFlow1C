@@ -101,7 +101,7 @@ bsl-language-server, context-mode). Настройка проектных MCP: [
 
 ## Проблемы?
 
-- MCP не отвечает? Проверьте пути в `opencode.jsonc` и что `bsl-language-server` запускается
+- MCP не отвечает? Проверьте пути в `opencode.jsonc` и что `bsl-language-server` запускается (корень `-s` должен быть `{{WORKSPACE_ROOT}}\external`, а не весь workspace — иначе bsl-analyzer начнёт индексировать `src/`/`ext/`)
 - RLM не индексирует? Проверьте, что выгрузка развёрнута в `src/` и проект зарегистрирован в реестре
 - Другие проблемы? См. [Troubleshooting](docs/troubleshooting/README.md) (если присутствует)
 

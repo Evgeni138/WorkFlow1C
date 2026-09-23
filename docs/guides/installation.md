@@ -180,7 +180,8 @@ rlm-tools-bsl --transport streamable-http
 
 1. В opencode откройте палитру MCP (например `/mcp`)
 2. Убедитесь, что серверы `rlm-tools-bsl`, `bsl-language-server`, `v8std`, `playwright`, `context-mode` подключены
-3. Пути в `opencode.jsonc` (`{{WORKSPACE_ROOT}}`, `{{AI_ENV}}`, `{{NODE}}`) указывают на существующие файлы
+3. Проверьте пути в `opencode.jsonc` (`{{WORKSPACE_ROOT}}`, `{{AI_ENV}}`, `{{NODE}}`) указывают на существующие файлы
+4. Убедитесь, что корень `-s` у `bsl-language-server` = `{{WORKSPACE_ROOT}}\external` — bsl-language-server НЕ должен сканировать `src/`/`ext/` (это зона `rlm-tools-bsl`)
 
 ### Проверка навыков
 
@@ -211,7 +212,8 @@ rlm-tools-bsl --transport streamable-http
 **Решение:**
 1. Проверьте пути в `opencode.jsonc` — `{{AI_ENV}}` должен содержать `rlm-tools-bsl.exe` / `bsl-analyzer.exe`
 2. Проверьте, что мост `scripts/mcp-bsl-analyzer-bridge.cjs` существует в `{{WORKSPACE_ROOT}}`
-3. Проверьте логи сервера в консоли opencode
+3. Проверьте зону сканирования `bsl-language-server`: корень `-s` в `opencode.jsonc` должен указывать на `{{WORKSPACE_ROOT}}\external` (не на весь корень проекта). Если `-s` указывает на корень workspace, профиль `workspace` начнёт индексировать конфигурацию 1С из `src/`/`ext/` целиком (десятки тысяч файлов) и загрузит CPU/RAM на минуты/часы. Полная выгрузка анализируется через `rlm-tools-bsl`, а не через bsl-language-server
+4. Проверьте логи сервера в консоли opencode
 
 ### Навыки не выполняются
 

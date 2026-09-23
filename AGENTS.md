@@ -79,8 +79,8 @@ dist/                  — собранные артефакты (CFE/CF/EPF)
 
 | Task | Use |
 |------|-----|
-| Поиск по исходникам 1С (BSL/XML выгрузок конфигурации) | `rlm-tools-bsl` (брать вместо Grep/Glob всегда) |
-| Grep/Glob — только файл-система workspace: MD, JSON, PS1, CJS, внешние EPF/ERF-исходники | Grep/Glob (инфраструктурные файлы) |
+| Поиск по исходникам 1С (BSL/XML выгрузок конфигурации `src/`, `ext/`) | `rlm-tools-bsl` (брать вместо Grep/Glob всегда) |
+| Grep/Glob — только файл-система workspace: MD, JSON, PS1, CJS, внешние EPF/ERF-исходники (`external/`) | Grep/Glob (инфраструктурные файлы) |
 | 1C platform docs / syntax | `1c-help` (после `/1c-project-init`); до инициализации — `bsl-language-server` `search`/`syntax_help` |
 | BSP patterns | `1c-ssl` (после `/1c-project-init`); до инициализации — `bsp-patterns` skill |
 | Code templates | `1c-templates` (после `/1c-project-init`); до инициализации — `bsp-patterns` skill |
@@ -194,7 +194,8 @@ AI determines the mode based on task complexity:
 
 ### Контекст
 - RLM-first: для анализа больших BSL-кодовых баз используй `rlm-tools-bsl` (`rlm_start` → `rlm_help` → `rlm_execute`) вместо прямого чтения файлов
-- ⚠️ Пока в workspace нет выгрузки `src/`-cf/EDT, RLM работает в режиме `foreign_with_bsl`: объектные хелперы (например `get_object_profile`, `find_attributes`) не надёжны — используй `find_module`, поиск по BSL-текстам и файловые хелперы
+- ⚠️ Пока в workspace нет выгрузки `src/`-cf/EDT, RLM работает в режиме `foreign_with_bsl`: объектные хелперы (например `get_object_profile`, `find_attributes`) не надёжны — используй `find_module`, поиск по BSL-текстам и файловые хелперы. После развёртывания выгрузки (`src/`, `ext/`) и регистрации проекта в реестре RLM работай по полному индексу
+- ⚠️ bsl-language-server НЕ анализирует `src/`, `ext/` — полная выгрузка идёт ТОЛЬКО через `rlm-tools-bsl` (см. «Какой сервер использовать»)
 - Сохраняй решения в RLM после завершения задач
 - Task agents (subagents) для параллельных задач (изоляция контекста)
 
@@ -205,7 +206,7 @@ AI determines the mode based on task complexity:
 - `playwright` — ✅ включён и работает: управление браузером (веб-клиент 1С, тестирование)
 - `rlm-tools-bsl` — ✅ включён и работает. ⚠️ Без локальной cf/EDT-выгрузки в текущем workspace RLM работает в режиме `foreign_with_bsl`: объектные/метаданные-хелперы ненадёжны, доступны поиск по BSL-текстам и файловые хелперы. Реестр проектов: `{{RLM_PROJECTS}}` — для полноценного анализа по выгрузкам используй их ([Dach-Coin/rlm-tools-bsl](https://github.com/Dach-Coin/rlm-tools-bsl))
 - `v8std` — ✅ включён и работает: `v8std_search`, `v8std_explain_diagnostics`, `v8std_get_page` и др. ([ai.v8std.ru/mcp](https://ai.v8std.ru/mcp); текст запроса уходит во внешний сервис — не слать проприетарный код)
-- `bsl-language-server` — ✅ включён: `bsl-analyzer.exe mcp serve --profile workspace` (0.2.71) через прозрачный мост `scripts/mcp-bsl-analyzer-bridge.cjs` (newline-JSON ↔ newline-JSON; исправлено 2026-09-23 — ранее мост ждал LSP-frames и сервер не подключался)
+- `bsl-language-server` — ✅ включён: `bsl-analyzer.exe mcp serve --profile workspace -s {{WORKSPACE_ROOT}}\external` через прозрачный мост `scripts/mcp-bsl-analyzer-bridge.cjs` (newline-JSON ↔ newline-JSON; исправлено 2026-09-23 — ранее мост ждал LSP-frames и сервер не подключался). Корень анализа СУЖЕН до `external/`: на корне проекта профиль `workspace` авто-детектил конфигурацию 1С (`src/`, `ext/`, десятки тысяч файлов) и индексировал её целиком (2+ ядра CPU, ~4.6 ГБ RAM); теперь конфигурация анализируется только через `rlm-tools-bsl`
 - `context-mode` — ✅ включён и работает (экономия контекста). Ранее был помчен как «выключен по умолчанию» — статус обновлён
 
 Разграничение поиска по коду 1С: `rlm-tools-bsl` — навигация по XML-выгрузкам и файлам (RLM-индекс), `v8std` — «почему это нарушение стандарта».
@@ -213,8 +214,9 @@ AI determines the mode based on task complexity:
 При инициализации 1С проекта (`/1c-project-init`) разворачиваются общие MCP-серверы (1c-help, 1c-ssl, 1c-templates, 1c-syntax-checker, 1c-code-checker, 1c-forms) — см. `.claude/skills/1c-project-init/templates/mcp.json.template`. Шаблон в формате Claude (`.mcp.json`) — при разворачивании в opencode-проект конвертируйте его в секцию `mcp` файла `opencode.jsonc` целевого проекта (type http → remote, stdio → local с массивом command).
 
 - **Какой сервер использовать (критерий — «где живёт код»):**
+  - **`bsl-language-server` натравливается ИСКЛЮЧИТЕЛЬНО на каталог `external/` (внешние обработки/отчёты) и инфраструктурные скрипты `scripts/`.** Полная выгрузка конфигурации из `src/`, `ext/` СТРОГО исключена из зоны сканирования bsl-analyzer (корень `-s` = `{{WORKSPACE_ROOT}}\external`) и анализируется ТОЛЬКО через `rlm-tools-bsl`. НЕ расширять корень `-s` на весь workspace — профиль `workspace` авто-детектит из него конфигурацию 1С и полностью её индексирует (2+ ядра CPU / ГБ RAM).
   - **Код в выгрузках конфигурации** (`src/`, `ext/` → проекты реестра RLM) → `rlm-tools-bsl`: поиск модулей/методов/объектов, граф вызовов, ссылки на объекты метаданных, путь данных (`find_module`, `search_methods`, `find_call_hierarchy`, `find_callers_context`, `find_references_to_object`, `find_data_path`, `git_search`).
-  - **Код в текущем workspace** (`external/`, `scripts/`, развернутые выгрузки → тоже bsl-language-server) → `bsl-language-server`: линт/диагностики, карточка символа, структура модуля/форм, справка по платформе.
+  - **Код в текущем workspace** (`external/`, `scripts/` — вне конфигурации; конфигурация в `src/`, `ext/` идёт ТОЛЬКО через RLM) → `bsl-language-server`: линт/диагностики, карточка символа, структура модуля/форм, справка по платформе.
   - **Линт/проверка кода BSL** → `bsl-language-server` `diagnostics` (file/workspace, 180+ правил) + `v8std` («почему это нарушение»).
   - **Карточка символа / тип / кто вызывает одним запросом** → `bsl-language-server` `symbol_info`.
   - **Структура модуля / области / методы** → `bsl-language-server` `outline`.
